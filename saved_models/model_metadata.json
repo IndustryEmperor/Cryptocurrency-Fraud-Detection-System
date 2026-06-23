@@ -1,0 +1,60 @@
+{
+  "project": "Cryptocurrency Fraud Detection System",
+  "author": "Obiyomi Oluwanifemi (BU22CSC1008)",
+  "institution": "Bowen University, Iwo, Osun State",
+  "trained_on": "2026-04-18 12:37:30",
+  "datasets": [
+    "Elliptic Bitcoin",
+    "Kaggle Ethereum Fraud"
+  ],
+  "total_records": 56405,
+  "feature_count": 231,
+  "train_val_test_split": "70% / 15% / 15%",
+  "imbalance_method": "SMOTE + Random Under-sampling (train only)",
+  "graph_library": "NetworkX",
+  "models": {
+    "Random Forest": {
+      "accuracy": 0.9858,
+      "precision": 0.9441,
+      "recall": 0.9366,
+      "f1_score": 0.9403,
+      "auc_roc": 0.9967,
+      "rmse": 0.1205
+    },
+    "XGBoost": {
+      "accuracy": 0.9894,
+      "precision": 0.959,
+      "recall": 0.9514,
+      "f1_score": 0.9552,
+      "auc_roc": 0.9975,
+      "rmse": 0.0945
+    },
+    "GCN-Style (Graph + LogReg)": {
+      "accuracy": 0.8511,
+      "precision": 0.4408,
+      "recall": 0.9257,
+      "f1_score": 0.5972,
+      "auc_roc": 0.9542,
+      "rmse": 0.3106
+    },
+    "GAT-Style (Attention Graph + GBM)": {
+      "accuracy": 0.9869,
+      "precision": 0.9472,
+      "recall": 0.9425,
+      "f1_score": 0.9449,
+      "auc_roc": 0.996,
+      "rmse": 0.1073
+    }
+  },
+  "best_model_f1": "XGBoost",
+  "best_model_auc": "XGBoost",
+  "saved_files": [
+    "model_rf.pkl",
+    "model_xgb.pkl",
+    "model_gcn.pkl",
+    "model_gat.pkl",
+    "scaler.pkl",
+    "imputer.pkl",
+    "feature_columns.pkl"
+  ]
+}

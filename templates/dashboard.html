@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard — CryptoGuard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0d0d0d; }
+        .stat-card { transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-number { font-size: 2.5rem; font-weight: 700; }
+        .chart-container { position: relative; height: 340px; }
+        .model-row:hover { background: rgba(13,202,240,0.05); }
+        .metric-pill {
+            background: #1a1a2e;
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body class="bg-dark text-light">
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-black shadow">
+  <div class="container">
+    <a class="navbar-brand fw-bold text-info" href="/">🔐 CryptoGuard</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/detect">Fraud Detection</a></li>
+        <li class="nav-item"><a class="nav-link" href="/detect-pro">AI Threat Analysis</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/dashboard">Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Page header -->
+<div class="container pt-5 pb-2">
+    <h2 class="fw-bold text-info">📊 Fraud Monitoring Dashboard</h2>
+    <p class="text-secondary">Live overview of fraud detections and model performance</p>
+</div>
+
+<!-- Stats row -->
+<div class="container py-4">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card stat-card bg-dark border-info shadow text-center p-3">
+                <div class="card-body">
+                    <p class="text-secondary mb-1">Total Transactions Analysed</p>
+                    <h3 class="stat-number text-info">{{ total_transactions }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card bg-dark border-danger shadow text-center p-3">
+                <div class="card-body">
+                    <p class="text-secondary mb-1">Fraud Detected</p>
+                    <h3 class="stat-number text-danger">{{ fraud_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card bg-dark border-success shadow text-center p-3">
+                <div class="card-body">
+                    <p class="text-secondary mb-1">Best Model Accuracy</p>
+                    <h3 class="stat-number text-success">{{ model_accuracy }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts row -->
+<div class="container pb-4">
+    <div class="row g-4">
+
+        <!-- Pie chart -->
+        <div class="col-md-5">
+            <div class="card bg-dark border-secondary shadow">
+                <div class="card-body">
+                    <h6 class="text-info mb-3">Transaction Verdict Split</h6>
+                    {% if total_transactions == 0 %}
+                    <div class="text-center text-muted py-5">
+                        <p>No transactions analysed yet.</p>
+                        <a href="/detect" class="btn btn-outline-info btn-sm">Run First Analysis</a>
+                    </div>
+                    {% else %}
+                    <div class="chart-container">
+                        <canvas id="fraudPieChart"></canvas>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Model metrics table -->
+        <div class="col-md-7">
+            <div class="card bg-dark border-secondary shadow">
+                <div class="card-body">
+                    <h6 class="text-info mb-3">Model Performance Metrics</h6>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-borderless align-middle">
+                            <thead class="text-secondary">
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Accuracy</th>
+                                    <th>F1 Score</th>
+                                    <th>AUC-ROC</th>
+                                    <th>Precision</th>
+                                </tr>
+                            </thead>
+                            <tbody id="metricsBody">
+                                <tr><td colspan="5" class="text-muted text-center">Loading metrics...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick action buttons -->
+<div class="container pb-5">
+    <div class="d-flex gap-3">
+        <a href="/detect" class="btn btn-info">+ New Detection</a>
+        <a href="/detect-pro" class="btn btn-outline-info">AI Threat Analysis</a>
+        <button class="btn btn-outline-secondary" onclick="location.reload()">↻ Refresh</button>
+    </div>
+</div>
+
+
+<!-- Blacklist Status Card -->
+<div class="container pb-5">
+  <div class="card bg-dark border-info shadow">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="text-info mb-0">🛡️ Live Blacklist Status</h6>
+        <button class="btn btn-outline-info btn-sm" onclick="refreshBlacklist()">↻ Refresh</button>
+      </div>
+      <div class="row text-center g-3" id="blacklistStats">
+        <div class="col-6 col-md-3">
+          <div class="bg-dark border border-secondary rounded p-2">
+            <div class="text-muted small">ETH Addresses</div>
+            <div class="fw-bold text-danger fs-5" id="blEth">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="bg-dark border border-secondary rounded p-2">
+            <div class="text-muted small">BTC Addresses</div>
+            <div class="fw-bold text-warning fs-5" id="blBtc">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="bg-dark border border-secondary rounded p-2">
+            <div class="text-muted small">OFAC ETH Added</div>
+            <div class="fw-bold text-success fs-5" id="blOfacEth">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="bg-dark border border-secondary rounded p-2">
+            <div class="text-muted small">OFAC BTC Added</div>
+            <div class="fw-bold text-success fs-5" id="blOfacBtc">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <span class="badge" id="blStatusBadge" style="background:#1a1a2e;border:1px solid #0dcaf0;color:#0dcaf0;font-size:.75rem">
+            Loading...
+          </span>
+          <span class="text-muted small ms-2" id="blLastUpdated"></span>
+        </div>
+        <small class="text-muted">Auto-refreshes every 24 hours · Sources: OFAC SDN List + hardcoded base</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function refreshBlacklist() {
+  fetch('/api/blacklist-status')
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('blEth').textContent        = d.eth_addresses || '—';
+      document.getElementById('blBtc').textContent        = d.btc_addresses || '—';
+      document.getElementById('blOfacEth').textContent    = '+' + (d.ofac_eth_added || 0);
+      document.getElementById('blOfacBtc').textContent    = '+' + (d.ofac_btc_added || 0);
+      document.getElementById('blLastUpdated').textContent = d.last_updated ? 'Last updated: ' + d.last_updated : '';
+      const badge = document.getElementById('blStatusBadge');
+      const isLive = d.status && d.status.includes('Live');
+      badge.textContent   = d.status || 'Unknown';
+      badge.style.color   = isLive ? '#4ade80' : '#fbbf24';
+      badge.style.border  = isLive ? '1px solid #4ade80' : '1px solid #fbbf24';
+    })
+    .catch(() => {
+      document.getElementById('blStatusBadge').textContent = 'Could not reach /api/blacklist-status';
+    });
+}
+refreshBlacklist();
+setInterval(refreshBlacklist, 30000);  // poll every 30s
+</script>
+
+<footer class="text-center text-muted py-4 border-top border-secondary">
+    <small>CryptoGuard — Cryptocurrency Fraud Detection System | Bowen University 2024</small>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ── Pie chart ──────────────────────────────────────────────────────────────
+{% if total_transactions > 0 %}
+const ctx = document.getElementById('fraudPieChart');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Legitimate', 'Fraudulent'],
+        datasets: [{
+            data: [{{ legit_count }}, {{ fraud_count }}],
+            backgroundColor: ['#198754', '#dc3545'],
+            borderColor: ['#157347', '#b02a37'],
+            borderWidth: 2,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { color: '#adb5bd', padding: 20 }
+            }
+        }
+    }
+});
+{% endif %}
+
+// ── Load model metrics from Flask API ─────────────────────────────────────
+fetch('/api/metadata')
+    .then(r => r.json())
+    .then(data => {
+        const models = data.models || {};
+        const tbody = document.getElementById('metricsBody');
+        tbody.innerHTML = '';
+
+        const modelLabels = {
+            'Random Forest'                   : 'Random Forest',
+            'XGBoost'                         : 'XGBoost',
+            'GCN-Style (Graph + LogReg)'      : 'GCN-Style',
+            'GAT-Style (Attention Graph + GBM)': 'GAT-Style',
+        };
+
+        let hasData = false;
+        for (const [key, metrics] of Object.entries(models)) {
+            hasData = true;
+            const label = modelLabels[key] || key;
+            const acc   = metrics.accuracy  ? (metrics.accuracy  * 100).toFixed(1) + '%' : 'N/A';
+            const f1    = metrics.f1_score  ? (metrics.f1_score  * 100).toFixed(1) + '%' : 'N/A';
+            const auc   = metrics.auc_roc   ? metrics.auc_roc.toFixed(3)                 : 'N/A';
+            const prec  = metrics.precision ? (metrics.precision * 100).toFixed(1) + '%' : 'N/A';
+
+            tbody.innerHTML += `
+                <tr class="model-row">
+                    <td><span class="text-info fw-semibold">${label}</span></td>
+                    <td><span class="metric-pill text-success">${acc}</span></td>
+                    <td><span class="metric-pill text-info">${f1}</span></td>
+                    <td><span class="metric-pill text-warning">${auc}</span></td>
+                    <td><span class="metric-pill text-secondary">${prec}</span></td>
+                </tr>`;
+        }
+
+        if (!hasData) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">No metadata available</td></tr>';
+        }
+    })
+    .catch(() => {
+        document.getElementById('metricsBody').innerHTML =
+            '<tr><td colspan="5" class="text-muted text-center">Could not load metrics</td></tr>';
+    });
+</script>
+</body>
+</html>

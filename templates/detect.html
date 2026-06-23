@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fraud Detection — CryptoGuard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body{background:#0d0d0d}
+        .form-control{background:#1a1a2e;border-color:#0dcaf0;color:#fff}
+        .form-control:focus{background:#1a1a2e;border-color:#0dcaf0;color:#fff;box-shadow:0 0 0 .2rem rgba(13,202,240,.25)}
+        .form-control::placeholder{color:#6c757d}
+        .form-label{font-size:.85rem;font-weight:600;color:#adb5bd;text-transform:uppercase;letter-spacing:.04em}
+        .input-group-text{background:#0d1117;border-color:#0dcaf0;color:#0dcaf0;font-size:.85rem}
+        .section-divider{border-top:1px solid #1e2a3a;margin:1.2rem 0}
+        .result-card{animation:fadeIn .4s ease-in}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+        .stat-item{background:#1a1a2e;border-radius:8px;padding:.6rem .9rem}
+        .stat-label{font-size:.7rem;color:#6c757d;text-transform:uppercase;letter-spacing:.04em}
+        .stat-value{font-size:.88rem;font-weight:600;color:#fff;font-family:monospace}
+        .flag-item{background:#2d1b1b;border-left:3px solid #dc3545;border-radius:4px;padding:.4rem .75rem;margin-bottom:.4rem;font-size:.82rem;color:#f87171}
+        .blacklist-banner{background:#3d0000;border:2px solid #dc3545;border-radius:8px;padding:1rem;margin-bottom:1rem}
+        .live-badge{background:#0d2a0d;border:1px solid #198754;color:#4ade80;font-size:.72rem;padding:2px 8px;border-radius:10px}
+        .spinner-border{display:none}
+        .loading .spinner-border{display:inline-block}
+        .loading .btn-text{display:none}
+        .hash-display{font-family:monospace;font-size:.75rem;word-break:break-all;color:#0dcaf0}
+        .addr-display{font-family:monospace;font-size:.75rem;word-break:break-all;color:#adb5bd}
+    </style>
+</head>
+<body class="bg-dark text-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-black shadow">
+  <div class="container">
+    <a class="navbar-brand fw-bold text-info" href="/">🔐 CryptoGuard</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/detect">Fraud Detection</a></li>
+        <li class="nav-item"><a class="nav-link" href="/detect-pro">AI Threat Analysis</a></li>
+        <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container pt-5 pb-2 text-center">
+    <h2 class="fw-bold text-info">🔍 Transaction Fraud Detection</h2>
+    <p class="text-secondary">Enter transaction details from Etherscan — addresses are checked against live data & fraud blacklist</p>
+</div>
+
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-7">
+      <div class="card bg-dark border-info shadow-lg">
+        <div class="card-body p-4">
+          <form action="/predict-ai" method="POST" id="detectForm">
+            <input type="hidden" name="page" value="detect">
+
+            <div class="mb-3">
+              <label class="form-label">Transaction Hash</label>
+              <div class="input-group">
+                <span class="input-group-text">TX</span>
+                <input type="text" name="tx_hash" class="form-control font-monospace"
+                       placeholder="0xbfe42f8c9da836..." required
+                       value="{{ request.form.get('tx_hash','') }}">
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12">
+                <label class="form-label">From Address <span class="text-success" style="font-size:.7rem;text-transform:none">● Live lookup enabled</span></label>
+                <div class="input-group">
+                  <span class="input-group-text">↑</span>
+                  <input type="text" name="from_addr" class="form-control font-monospace"
+                         placeholder="0x4838b106fce964..."
+                         value="{{ request.form.get('from_addr','') }}">
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">To Address</label>
+                <div class="input-group">
+                  <span class="input-group-text">↓</span>
+                  <input type="text" name="to_addr" class="form-control font-monospace"
+                         placeholder="0x2bf916f8169ed2..."
+                         value="{{ request.form.get('to_addr','') }}">
+                </div>
+              </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Amount</label>
+                <div class="input-group">
+                  <input type="number" step="any" name="amount" class="form-control"
+                         placeholder="0.015" min="0" value="{{ request.form.get('amount','') }}">
+                  <span class="input-group-text">ETH</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Txn Fee</label>
+                <div class="input-group">
+                  <input type="number" step="any" name="fee" class="form-control"
+                         placeholder="0.000006" min="0" value="{{ request.form.get('fee','') }}">
+                  <span class="input-group-text">ETH</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Value (USD)</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" step="any" name="value_usd" class="form-control"
+                         placeholder="35.01" min="0" value="{{ request.form.get('value_usd','') }}">
+                </div>
+              </div>
+            </div>
+
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-info btn-lg" id="submitBtn">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                <span class="btn-text">🔍 Run Fraud Analysis</span>
+              </button>
+            </div>
+          </form>
+
+          {% if error %}<div class="alert alert-danger mt-4">⚠️ {{ error }}</div>{% endif %}
+
+          {% if result %}
+          <div class="result-card mt-4">
+            <hr class="border-secondary">
+
+            <!-- Blacklist banner -->
+            {% if result.blacklist_hit %}
+            <div class="blacklist-banner mb-3">
+              <div class="fw-bold text-danger fs-6 mb-1">🚨 CONFIRMED FRAUD ADDRESS DETECTED</div>
+              <div class="text-danger small">{{ result.blacklist_msg }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Verdict -->
+            <div class="alert {% if result.verdict=='Fraudulent' %}alert-danger{% elif result.verdict=='Suspicious' %}alert-warning{% else %}alert-success{% endif %} text-center fw-bold fs-5 mb-3">
+              {% if result.verdict=='Fraudulent' %}🔴 FRAUDULENT
+              {% elif result.verdict=='Suspicious' %}🟡 SUSPICIOUS — REVIEW RECOMMENDED
+              {% else %}🟢 LEGITIMATE{% endif %}
+              <div class="fs-6 fw-normal mt-1">Risk Score: {{ result.fraud_prob }}% · Risk Level: {{ result.risk_level }}</div>
+            </div>
+
+            <!-- Chain badge (detect) -->
+            {% if result %}
+            <div class="d-flex gap-2 mb-2">
+              <span class="badge {% if result.chain=='ETH' %}bg-primary{% else %}bg-warning text-dark{% endif %} fs-6">{{ result.chain_label }}</span>
+              {% if result.wallet_checked %}<span class="badge bg-dark border border-success text-success" style="font-size:.72rem">Live: {{ result.api_used }}</span>{% endif %}
+            </div>
+            {% endif %}
+            <!-- Score breakdown pills -->
+            <div class="d-flex gap-2 flex-wrap mb-3">
+              <span class="badge bg-secondary">Rules: {{ result.rule_score }}%</span>
+              {% if result.wallet_checked %}
+              <span class="badge bg-dark border border-success text-success">
+                Live Wallet: {{ result.wallet_score }}% <span class="live-badge ms-1">LIVE</span>
+              </span>
+              {% endif %}
+              <span class="badge bg-dark border border-info text-info">AI Models: {{ result.model_score }}%</span>
+            </div>
+
+            <!-- Transaction fields -->
+            <h6 class="text-info mb-2">📋 Transaction</h6>
+            <div class="stat-grid mb-3">
+              <div class="stat-item" style="grid-column:1/-1">
+                <div class="stat-label">Hash</div>
+                <div class="hash-display">{{ result.tx_hash }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">From</div>
+                <div class="addr-display">{{ result.from_addr or 'N/A' }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">To</div>
+                <div class="addr-display">{{ result.to_addr or 'N/A' }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Amount</div>
+                <div class="stat-value">{{ result.amount }} ETH</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Fee</div>
+                <div class="stat-value">{{ result.fee }} ETH</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">USD Value</div>
+                <div class="stat-value">${{ result.value_usd }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Self-Transfer</div>
+                <div class="stat-value {% if result.is_self_transfer %}text-danger{% else %}text-success{% endif %}">
+                  {{ 'Yes ⚠️' if result.is_self_transfer else 'No ✓' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Live wallet stats -->
+            {% if result.wallet_display %}
+            <h6 class="text-info mb-2">🌐 Live Wallet Data <span class="live-badge">ETHERSCAN</span></h6>
+            <div class="stat-grid mb-3">
+              {% for label, value in result.wallet_display.items() %}
+              <div class="stat-item">
+                <div class="stat-label">{{ label }}</div>
+                <div class="stat-value">{{ value }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Flags -->
+            {% if result.flags %}
+            <h6 class="text-danger mb-2">🚩 Fraud Indicators</h6>
+            {% for f in result.flags %}
+            <div class="flag-item">{{ f }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Explanation -->
+            <div class="border-start border-info ps-3 mt-3">
+              <small class="text-muted">{{ result.explanation }}</small>
+            </div>
+
+            <div class="text-center mt-3">
+              <a href="/detect-pro" class="btn btn-outline-info btn-sm">Deep AI Analysis →</a>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card bg-dark border-secondary mt-4">
+        <div class="card-body">
+          <h6 class="text-info mb-2">💡 How to use</h6>
+          <p class="text-primary small mb-3">Go to <a href="https://etherscan.io/txs" target="_blank" class="text-info">etherscan.io/txs</a>, click any transaction and copy the 5 fields into the form above.</p>
+          <p class="text-primary small mb-0">The <strong class="text-info">From Address</strong> is automatically looked up live on Etherscan for full wallet behaviour analysis.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="text-center text-muted py-4 border-top border-secondary mt-4">
+  <small>CryptoGuard — Cryptocurrency Fraud Detection System | Bowen University 2024</small>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.getElementById('detectForm').addEventListener('submit', function(){
+    document.getElementById('submitBtn').classList.add('loading');
+  });
+</script>
+</body>
+</html>

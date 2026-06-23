@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CryptoGuard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0d0d0d; }
+        .hero-section { background: linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 100%); border-bottom: 1px solid #0dcaf0; }
+        .card { transition: transform 0.2s; }
+        .card:hover { transform: translateY(-3px); }
+        .price-value { font-size: 1.8rem; font-weight: 700; color: #0dcaf0; }
+        .news-date { font-size: 0.75rem; }
+    </style>
+</head>
+<body class="bg-dark text-light">
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-black shadow">
+  <div class="container">
+    <a class="navbar-brand fw-bold text-info fs-4" href="{{ url_for('index') }}">🔐 CryptoGuard</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link active" href="{{ url_for('index') }}">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('detect') }}">Fraud Detection</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('detect_pro') }}">AI Threat Analysis</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero-section py-5 text-center">
+    <div class="container py-4">
+        <h1 class="display-5 fw-bold mb-3">Real-Time Cryptocurrency Monitoring</h1>
+        <p class="lead text-secondary mb-4">AI-Powered Fraud Detection & Blockchain Intelligence</p>
+        <a href="{{ url_for('detect') }}" class="btn btn-info btn-lg me-2">Analyze Transaction</a>
+        <a href="{{ url_for('detect_pro') }}" class="btn btn-outline-info btn-lg">AI Threat Analysis</a>
+    </div>
+</section>
+
+<!-- Live Crypto Prices -->
+<div class="container py-5">
+    <h3 class="mb-4 text-info">📈 Live Cryptocurrency Prices</h3>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card bg-dark border-info shadow text-center p-3">
+                <div class="card-body">
+                    <h5 class="text-secondary mb-2">₿ Bitcoin</h5>
+                    <p class="price-value">${{ btc_price }}</p>
+                    <small class="text-muted">USD</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-info shadow text-center p-3">
+                <div class="card-body">
+                    <h5 class="text-secondary mb-2">Ξ Ethereum</h5>
+                    <p class="price-value">${{ eth_price }}</p>
+                    <small class="text-muted">USD</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-info shadow text-center p-3">
+                <div class="card-body">
+                    <h5 class="text-secondary mb-2">⬡ BNB</h5>
+                    <p class="price-value">${{ bnb_price }}</p>
+                    <small class="text-muted">USD</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="container pb-4">
+    <div class="row g-4 text-center">
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary shadow p-3">
+                <div class="card-body">
+                    <h1 class="display-6">🔍</h1>
+                    <h5 class="text-info">Fraud Detection</h5>
+                    <p class="text-secondary small">Quickly check if a transaction is suspicious</p>
+                    <a href="{{ url_for('detect') }}" class="btn btn-info btn-sm">Run Check</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary shadow p-3">
+                <div class="card-body">
+                    <h1 class="display-6">🤖</h1>
+                    <h5 class="text-info">AI Threat Analysis</h5>
+                    <p class="text-secondary small">Deep AI-powered risk scoring with explanation</p>
+                    <a href="{{ url_for('detect_pro') }}" class="btn btn-info btn-sm">Analyze</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary shadow p-3">
+                <div class="card-body">
+                    <h1 class="display-6">📊</h1>
+                    <h5 class="text-info">Dashboard</h5>
+                    <p class="text-secondary small">Monitor fraud trends and model performance</p>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-info btn-sm">View</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Latest Crypto News -->
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-info mb-0">📰 Latest Crypto News</h3>
+        <div class="d-flex align-items-center gap-2">
+            <span id="newsStatus" class="text-muted small"></span>
+            <button onclick="loadNews()" class="btn btn-outline-info btn-sm">↻ Refresh</button>
+        </div>
+    </div>
+
+    <!-- News filter tabs -->
+    <div class="d-flex gap-2 mb-4 flex-wrap">
+        <button class="btn btn-info btn-sm news-tab active" data-topic="crypto">All Crypto</button>
+        <button class="btn btn-outline-secondary btn-sm news-tab" data-topic="bitcoin">Bitcoin</button>
+        <button class="btn btn-outline-secondary btn-sm news-tab" data-topic="ethereum">Ethereum</button>
+        <button class="btn btn-outline-secondary btn-sm news-tab" data-topic="fraud">Fraud & Scam</button>
+        <button class="btn btn-outline-secondary btn-sm news-tab" data-topic="defi">DeFi</button>
+    </div>
+
+    <!-- News container -->
+    <div id="newsContainer">
+        <!-- Skeleton loaders -->
+        <div class="news-skeleton">
+            {% for i in range(6) %}
+            <div class="card bg-dark border-secondary mb-3 shadow news-skeleton-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div style="flex:1">
+                        <div class="skeleton-line" style="width:80%;height:14px;margin-bottom:8px"></div>
+                        <div class="skeleton-line" style="width:30%;height:11px"></div>
+                    </div>
+                    <div class="skeleton-btn ms-3"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="newsError" class="alert alert-secondary d-none">
+        <span class="text-muted">⚠️ Could not load live news. Showing cached headlines.</span>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="text-center text-muted py-4 border-top border-secondary">
+    <small>CryptoGuard — Cryptocurrency Fraud Detection System | Bowen University 2024</small>
+</footer>
+
+<style>
+.skeleton-line{background:linear-gradient(90deg,#1a1a2e 25%,#2a2a3e 50%,#1a1a2e 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px}
+.skeleton-btn{width:70px;height:30px;background:linear-gradient(90deg,#1a1a2e 25%,#2a2a3e 50%,#1a1a2e 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.news-card{transition:transform .2s,border-color .2s}
+.news-card:hover{transform:translateY(-2px);border-color:#0dcaf0!important}
+.news-source{font-size:.7rem;background:#1a1a2e;padding:2px 8px;border-radius:10px;color:#6c757d}
+.news-tab.active{background:#0dcaf0;border-color:#0dcaf0;color:#000}
+.breaking-badge{background:#dc3545;font-size:.65rem;padding:1px 6px;border-radius:3px;margin-right:6px;vertical-align:middle}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let currentTopic = 'crypto';
+let newsCache    = {};
+
+// Fallback headlines shown if all APIs fail
+const FALLBACK_NEWS = [
+    {title:'Bitcoin surpasses $90,000 as institutional demand continues to grow',url:'https://cointelegraph.com',source:'CoinTelegraph',published_at:'Just now'},
+    {title:'Ethereum Layer 2 transactions hit record high in April 2026',url:'https://decrypt.co',source:'Decrypt',published_at:'2 hours ago'},
+    {title:'Major crypto exchange reports $200M security breach — users urged to withdraw',url:'https://coindesk.com',source:'CoinDesk',published_at:'4 hours ago'},
+    {title:'DeFi protocol exploited for $50M in flash loan attack',url:'https://theblock.co',source:'The Block',published_at:'6 hours ago'},
+    {title:'SEC approves new Bitcoin ETF products for retail investors',url:'https://cryptoslate.com',source:'CryptoSlate',published_at:'8 hours ago'},
+    {title:'Blockchain fraud detection AI reduces false positives by 40%, study finds',url:'https://cointelegraph.com',source:'CoinTelegraph',published_at:'12 hours ago'},
+];
+
+async function loadNews(topic) {
+    if (topic) currentTopic = topic;
+
+    // Update tab styles
+    document.querySelectorAll('.news-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.topic === currentTopic);
+        btn.className = btn.classList.contains('active')
+            ? 'btn btn-info btn-sm news-tab active'
+            : 'btn btn-outline-secondary btn-sm news-tab';
+    });
+
+    // Check cache (60s)
+    const cacheKey = currentTopic;
+    if (newsCache[cacheKey] && Date.now() - newsCache[cacheKey].ts < 60000) {
+        renderNews(newsCache[cacheKey].articles);
+        return;
+    }
+
+    showSkeletons();
+    setStatus('Loading...');
+
+    // Try multiple sources
+    let articles = null;
+
+    // Source 1: cryptocurrency.cv (no key, 200+ sources)
+    try {
+        const query  = currentTopic === 'crypto' ? 'cryptocurrency' : currentTopic;
+        const res    = await fetch(
+            `https://cryptocurrency.cv/api/v1/news?q=${query}&limit=8`,
+            {signal: AbortSignal.timeout(5000)}
+        );
+        if (res.ok) {
+            const data = await res.json();
+            const items = data.articles || data.data || data.news || data || [];
+            if (Array.isArray(items) && items.length > 0) {
+                articles = items.slice(0, 8).map(a => ({
+                    title       : a.title || a.headline || '',
+                    url         : a.url   || a.link     || '#',
+                    source      : a.source?.name || a.source || a.publisher || 'Crypto News',
+                    published_at: formatTime(a.publishedAt || a.published_at || a.date || ''),
+                    breaking    : false,
+                })).filter(a => a.title);
+            }
+        }
+    } catch(e) {}
+
+    // Source 2: CryptoPanic public feed
+    if (!articles) {
+        try {
+            const kindMap = {fraud:'news', defi:'news', bitcoin:'news', ethereum:'news', crypto:'news'};
+            const res = await fetch(
+                `https://cryptopanic.com/api/v1/posts/?auth_token=public&kind=news&public=true&currencies=${currentTopic === 'bitcoin' ? 'BTC' : currentTopic === 'ethereum' ? 'ETH' : ''}`,
+                {signal: AbortSignal.timeout(6000)}
+            );
+            if (res.ok) {
+                const data = await res.json();
+                const items = data.results || [];
+                if (items.length > 0) {
+                    articles = items.slice(0, 8).map(a => ({
+                        title       : a.title || '',
+                        url         : a.url   || a.source?.url || '#',
+                        source      : a.source?.title || 'CryptoPanic',
+                        published_at: formatTime(a.published_at || ''),
+                        breaking    : (a.votes?.negative || 0) > 10,
+                    })).filter(a => a.title);
+                }
+            }
+        } catch(e) {}
+    }
+
+    // Source 3: Fallback
+    if (!articles || articles.length === 0) {
+        articles = FALLBACK_NEWS;
+        document.getElementById('newsError').classList.remove('d-none');
+        setStatus('Using cached headlines');
+    } else {
+        document.getElementById('newsError').classList.add('d-none');
+        newsCache[cacheKey] = {articles, ts: Date.now()};
+        setStatus(`${articles.length} articles · Updated just now`);
+    }
+
+    renderNews(articles);
+}
+
+function renderNews(articles) {
+    const container = document.getElementById('newsContainer');
+    container.innerHTML = articles.map((a, i) => `
+        <div class="card bg-dark border-secondary mb-3 shadow news-card" style="animation:fadeIn .3s ease ${i*0.05}s both">
+            <div class="card-body d-flex justify-content-between align-items-start gap-3">
+                <div style="flex:1;min-width:0">
+                    <h6 class="card-title mb-1 lh-base" style="font-size:.9rem">
+                        ${a.breaking ? '<span class="breaking-badge text-white">BREAKING</span>' : ''}
+                        ${escHtml(a.title)}
+                    </h6>
+                    <div class="d-flex align-items-center gap-2 mt-1">
+                        <span class="news-source">${escHtml(a.source)}</span>
+                        <small class="text-muted" style="font-size:.72rem">🕐 ${escHtml(a.published_at)}</small>
+                    </div>
+                </div>
+                <a href="${escHtml(a.url)}" target="_blank" rel="noopener"
+                   class="btn btn-outline-info btn-sm flex-shrink-0" style="font-size:.8rem">
+                    Read →
+                </a>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showSkeletons() {
+    document.getElementById('newsContainer').innerHTML = Array(6).fill(`
+        <div class="card bg-dark border-secondary mb-3 shadow">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div style="flex:1">
+                    <div class="skeleton-line" style="width:80%;height:14px;margin-bottom:8px"></div>
+                    <div class="skeleton-line" style="width:35%;height:11px"></div>
+                </div>
+                <div class="skeleton-btn ms-3"></div>
+            </div>
+        </div>`).join('');
+}
+
+function setStatus(msg) {
+    document.getElementById('newsStatus').textContent = msg;
+}
+
+function formatTime(str) {
+    if (!str) return 'Recently';
+    try {
+        const d    = new Date(str);
+        const diff = Math.floor((Date.now() - d) / 60000);
+        if (diff < 1)  return 'Just now';
+        if (diff < 60) return `${diff}m ago`;
+        if (diff < 1440) return `${Math.floor(diff/60)}h ago`;
+        return d.toLocaleDateString();
+    } catch { return str.slice(0,10); }
+}
+
+function escHtml(str) {
+    return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Tab click handlers
+document.querySelectorAll('.news-tab').forEach(btn => {
+    btn.addEventListener('click', () => loadNews(btn.dataset.topic));
+});
+
+// Fade-in animation
+const style = document.createElement('style');
+style.textContent = '@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}';
+document.head.appendChild(style);
+
+// Load on page open + auto-refresh every 5 minutes
+loadNews();
+setInterval(() => { newsCache = {}; loadNews(); }, 300000);
+</script>
+</body>
+</html>
